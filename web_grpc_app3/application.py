@@ -1,7 +1,5 @@
 import asyncio
 import grpc
-import logging
-
 from typing import Callable
 
 from aiohttp import web
@@ -41,40 +39,41 @@ class Application(web.Application):
 
         return _on_shutdown
 
-    def add_routes(self) -> None:
+    def add_routes(self):
         self.router.add_view('/helloworld', HelloWorldView)
 
-    def run(self) -> bool:
-        # todo: 一会改成自己的 ip, host
-        return web.run_app(self, port=8000)
+    def run(self):
+        # web.run_app(self, host="129.107.208.214", port=8000)
+        web.run_app(self, port=8000)
 
 
 class HelloServicer(HelloWorldServiceServicer):
-    def Hello(self, request: HelloRequest, context) -> HelloResponse:
+    def Hello(self, request, context):
         response = HelloResponse()
         response.message = "Hello {}!".format(request.name)
         return response
 
 
 class GrpcServer:
-    def __init__(self) -> None:
+    def __init__(self):
         init_grpc_aio()
-
         self.server = grpc.experimental.aio.server()
         self.servicer = HelloServicer()
 
         add_HelloWorldServiceServicer_to_server(self.servicer, self.server)
         self.server.add_insecure_port("[::]:50051")
 
-    async def start(self) -> None:
+    async def start(self):
         await self.server.start()
         await self.server.wait_for_termination()
 
-    async def stop(self) -> None:
-        await self.server.stop(1)
+    async def stop(self):
+        await self.servicer.stop(1)
 
 
 application = Application()
-
 if __name__ == '__main__':
     application.run()
+
+# Restart the server and enter the following url: ‘http://localhost:8000/helloworld’
+# in your browser. Voila, you should now see a “Hello World!” text on the page, sweet!
